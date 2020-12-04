@@ -9,7 +9,6 @@
 int main(int argc, char *argv[])
 {
     pid_t pid;
-
     int year, month, day, hour, minute, second, millisecond;
     struct timeval startTime;
     struct timeval endTime;
