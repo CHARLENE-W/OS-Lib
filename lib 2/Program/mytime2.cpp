@@ -4,11 +4,12 @@
 #include <sys/time.h> //gettimeofday
 #include <sys/wait.h> //wait
 #include <ctime>      //localtime
-#include"string.h"
-#include"stdlib.h"
+#include "string.h"
+#include "stdlib.h"
 int main(int argc, char *argv[])
 {
     pid_t pid;
+
     int year, month, day, hour, minute, second, millisecond;
     struct timeval startTime;
     struct timeval endTime;
@@ -25,27 +26,23 @@ int main(int argc, char *argv[])
     }
     else if (pid == 0)
     {
-        
-        if (argc == 2)
-            execv(argv[1], argv);
-        else
+
+        argv++;
+        if (execvp(argv[0], argv) == -1)
         {
-           argv++;
-            if(execv(argv[0], argv)==-1){
-                printf("error\n");
-            }
+            printf("error\n");
         }
     }
     else
     {
         gettimeofday(&startTime, &zone);
-        wait(0); 
+        wait(0);
         gettimeofday(&endTime, &zone);
         long long int during = (endTime.tv_sec - startTime.tv_sec) * 1000000 + endTime.tv_usec - startTime.tv_usec;
         millisecond = during / 1000;
-        during%=1000;
+        during %= 1000;
         second = millisecond / 1000;
-        millisecond%=1000;
+        millisecond %= 1000;
         minute = second / 60;
         second %= 60;
         hour = minute / 60;
@@ -94,10 +91,10 @@ int main(int argc, char *argv[])
             printf("%d 分 ", minute);
         if (second > 0)
             printf("%d 秒 ", second);
-        if(millisecond>0)
-            printf("%d 毫秒 ",millisecond);
-        if(during>0)
-            printf("%lld 微秒 ",during);
+        if (millisecond > 0)
+            printf("%d 毫秒 ", millisecond);
+        if (during > 0)
+            printf("%lld 微秒 ", during);
         printf("\n");
         return 0;
     }

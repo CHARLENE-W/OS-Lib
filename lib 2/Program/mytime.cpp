@@ -1,9 +1,9 @@
 #include <iostream>
 #include <windows.h>
 #include <stdlib.h>
-#include<stdio.h>
-#include<winnt.h>
-#include"Mmsystem.h"
+#include <stdio.h>
+#include <winnt.h>
+#include "Mmsystem.h"
 using namespace std;
 int main(int argc, char *argv[])
 {
@@ -74,21 +74,21 @@ int main(int argc, char *argv[])
         year--;
         month += 12;
     }
-    printf("³ÌÐòÔËÐÐÊ±¼ä£º");
+    printf("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£º");
     if (year > 0)
-        printf("%d Äê ", year);
+        printf("%d ï¿½ï¿½ ", year);
     if (month > 0)
-        printf("%d ÔÂ ", month);
+        printf("%d ï¿½ï¿½ ", month);
     if (day > 0)
-        printf("%d ÈÕ ", day);
+        printf("%d ï¿½ï¿½ ", day);
     if (hour > 0)
         printf("%d Ê± ", hour);
     if (minute > 0)
-        printf("%d ·Ö ", minute);
+        printf("%d ï¿½ï¿½ ", minute);
     if (second > 0)
-        printf("%d Ãë ", second);
+        printf("%d ï¿½ï¿½ ", second);
     if (millisecond > 0)
-        printf("%d ºÁÃë", millisecond);
+        printf("%d ï¿½ï¿½ï¿½ï¿½", millisecond);
     printf("\n");
     return 0;
 }
