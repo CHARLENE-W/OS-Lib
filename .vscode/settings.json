@@ -7,7 +7,6 @@
         "stream": "c",
         "memory": "c",
         "new": "c",
-       
         "streambed": "c",
         "system_error": "c",
         "tuple": "c",
@@ -19,12 +18,12 @@
         "locale": "c",
         "ilocano": "c",
         "slocum": "c",
-       
         "studded": "c",
         "string": "c",
         "futility": "c",
         "*.rh": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "cstdlib": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
   
