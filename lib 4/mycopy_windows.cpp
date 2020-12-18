@@ -20,34 +20,47 @@ void copyFile(char *sourcePath, char *objectPath)
     FindFirstFile(sourcePath, &findFileData);
     strcat(objectPath, "\\");
     strcat(objectPath, (const char *)(findFileData.cFileName));
-
     HANDLE hSourceFile = CreateFile(sourcePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    HANDLE hObjectFile = CreateFile(objectPath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE hObjectFile = CreateFile(objectPath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hObjectFile == INVALID_HANDLE_VALUE)
     {
-        printf("创建文件失败\n");
-        exit(0);
+        printf("文件 %s 已存在\n", sourcePath);
     }
-    long size = GetFileSize(hSourceFile, NULL);
-    printf("size=%ld\n", size);
-    char *buffer = new char[size];
-    DWORD tmp;
-    if (!ReadFile(hSourceFile, buffer, size, &tmp, NULL))
+    else
     {
-        printf("读取源文件失败:%d\n", GetLastError());
-        exit(0);
+        long size = GetFileSize(hSourceFile, NULL);
+        char *buffer = new char[size];
+        DWORD tmp;
+        if (!ReadFile(hSourceFile, buffer, size, &tmp, NULL))
+        {
+            printf("读取源文件失败:%d\n", GetLastError());
+            exit(0);
+        }
+        if (!WriteFile(hObjectFile, buffer, size, &tmp, NULL))
+        {
+            printf("写入文件失败\n");
+            exit(0);
+        }
+        else
+        {
+            printf("文件 %s 已复制...\n", sourcePath);
+        }
+        FILETIME lpCreationTime, lpLastAccessTime, lpLastWriteTime;
+        GetFileTime(hSourceFile, &lpCreationTime, &lpLastAccessTime, &lpLastWriteTime);
+        SetFileTime(hObjectFile, &lpCreationTime, &lpLastAccessTime, &lpLastWriteTime);
+        DWORD attr=GetFileAttributes(sourcePath);
+        if(attr!=INVALID_FILE_ATTRIBUTES)
+        SetFileAttributes(objectPath,attr);
+        else printf("设置文件属性无效\n");
+        delete[] buffer;
     }
-    if (!WriteFile(hObjectFile, buffer, size, &tmp, NULL))
-    {
-        printf("写入文件失败\n");
-        exit(0);
-    }
-    delete[] buffer;
+
+    CloseHandle(hSourceFile);
+    CloseHandle(hObjectFile);
 }
 void copyDirectory(char *sourcePath, char *objectPath)
 {
-   
+
     WIN32_FIND_DATA findFileData;
     char *source = new char[1000];
     strcpy(source, sourcePath);
@@ -55,10 +68,11 @@ void copyDirectory(char *sourcePath, char *objectPath)
     char *object = new char[1000];
     strcpy(object, objectPath);
     HANDLE hFilePath = FindFirstFile(source, &findFileData);
-     strcpy(source, sourcePath);
-    //   printf("1:%s\n", findFileData.cFileName);
+    strcpy(source, sourcePath);
+
     if (hFilePath == INVALID_HANDLE_VALUE)
     {
+        CloseHandle(hFilePath);
         return;
     }
     else
@@ -69,37 +83,33 @@ void copyDirectory(char *sourcePath, char *objectPath)
             {
                 strcat(source, "\\");
                 strcat(source, (const char *)(findFileData.cFileName));
-                printf("source: %s\n", source);
+
                 if (isFile(source))
                 {
-                    printf("source: %s  object: %s               begin to copy file\n", source, object);
+
                     copyFile(source, object);
                 }
                 else
                 {
-
                     strcat(object, "\\");
                     strcat(object, (const char *)(findFileData.cFileName));
-                    printf("source: %s           object: %s\n", source, object);
+                    printf("目录 %s 已创建...\n", object);
                     CreateDirectory(object, NULL);
-                      copyDirectory(source, object);
-
+                    copyDirectory(source, object);
                     strcpy(object, objectPath);
                     strcat(object, "\\");
-                     strcpy(source, sourcePath);
+                    strcpy(source, sourcePath);
                 }
             }
         } while (FindNextFile(hFilePath, &findFileData));
     }
     delete[] source;
     delete[] object;
+    CloseHandle(hFilePath);
 }
 int main(int argc, char *argv[])
 {
-    // char a[1000];
-    // char b[1000];
-    // strcpy(a,"..\\test_for_cp");
-    // strcpy(b, "..\\text2314");
+
     WIN32_FIND_DATA findFileData;
     WIN32_FIND_DATA findFileData_;
     //判断原文件和目标目录是否存在
@@ -121,10 +131,13 @@ int main(int argc, char *argv[])
     }
     else
     {
-        printf("debug1+++++++++++++\n");
+
         strcat(argv[2], "\\");
         strcat(argv[2], findFileData.cFileName);
         CreateDirectory(argv[2], NULL);
+        printf("目录 %s 已创建...\n", argv[2]);
         copyDirectory(argv[1], argv[2]);
     }
+
+    return 0;
 }
