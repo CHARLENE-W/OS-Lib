@@ -66,7 +66,7 @@ void copyFile(char *sourceFile, char *objectFile)
     timebuf.actime = buf.st_atime;
     timebuf.modtime = buf.st_mtime;
     utime(objectFile, &timebuf);
-
+    chmod(objectFile, buf.st_mode);
     close(fd_in);
     close(fd_out);
 }
@@ -96,7 +96,6 @@ void copyLink(char *sourceFile, char *objectFile)
 void copyDir(char *sourceFile, char *objectFile)
 {
     struct stat buf;
-    stat(sourceFile, &buf);
     DIR *dir = opendir(sourceFile);
     if (dir == NULL)
     {
@@ -113,6 +112,7 @@ void copyDir(char *sourceFile, char *objectFile)
                 //若既不是当前目录也不是父目录,则创建新目录
                 char *tmp_o = new char[1000];
                 char *tmp_s = new char[1000];
+                char *tmp = new char[1000];
                 strcpy(tmp_o, objectFile);
                 strcat(tmp_o, "/");
                 strcat(tmp_o, dirent->d_name);
@@ -121,18 +121,23 @@ void copyDir(char *sourceFile, char *objectFile)
                 strcpy(tmp_s, sourceFile);
                 strcat(tmp_s, "/");
                 strcat(tmp_s, dirent->d_name);
-
-                struct utimbuf timebuf;
-                timebuf.actime = buf.st_atime;
-                timebuf.modtime = buf.st_mtime;
-                utime(objectFile, &timebuf);
-
                 stat(tmp_s, &buf);
-                chmod(tmp_o, buf.st_mode);
+                struct utimbuf *timebuf = new struct utimbuf;
+                timebuf->actime = buf.st_atime;
+                timebuf->modtime = buf.st_mtime;
+
+                strcpy(tmp, tmp_o);
 
                 copyDir(tmp_s, tmp_o);
+
+                utime(tmp, timebuf);
+
+                chmod(tmp_o, buf.st_mode);
+
+                delete timebuf;
                 delete[] tmp_o;
                 delete[] tmp_s;
+                delete[] tmp;
             }
         }
         else if (dirent->d_type == DT_REG)
@@ -151,7 +156,6 @@ void copyDir(char *sourceFile, char *objectFile)
             strcpy(tmp_s, sourceFile);
             strcat(tmp_s, "/");
             strcat(tmp_s, dirent->d_name);
-
             copyLink(tmp_s, objectFile);
             delete[] tmp_s;
         }
@@ -161,17 +165,27 @@ int main(int argc, char *argv[])
 {
     char *source = new char[1000];
     char *object = new char[1000];
+
+    char *object_ = new char[1000];
     strcpy(source, argv[1]);
     strcpy(object, argv[2]);
-  
+
     struct stat buf;
+
+    struct utimbuf *timebuf = new struct utimbuf;
+     struct utimbuf *timebuf_ = new struct utimbuf;
     lstat(source, &buf);
+    timebuf->actime = buf.st_atime;
+    timebuf->modtime = buf.st_mtime;
+     timebuf_->actime = buf.st_atime;
+    timebuf_->modtime = buf.st_mtime;
     DIR *dir;
     if ((dir = opendir(object)) == NULL)
     {
-      
-        mkdir(object, buf.st_mode);
-        chmod(object, buf.st_mode);
+
+        mkdir(object, 0777);
+
+        chmod(object, 0777);
     }
     closedir(dir);
     if (S_ISREG(buf.st_mode))
@@ -191,20 +205,19 @@ int main(int argc, char *argv[])
         //目录
 
         getFileName(source, object);
-        stat(source, &buf);
+        strcpy(object_, object);
         mkdir(object, buf.st_mode);
         printf("目录：%s 已创建...\n", object);
-
-        struct utimbuf timebuf;
-        timebuf.actime = buf.st_atime;
-        timebuf.modtime = buf.st_mtime;
-        utime(object, &timebuf);
-
         chmod(object, buf.st_mode);
         copyDir(source, object);
+        
+        utime(object_, timebuf);
+        delete timebuf;
     }
+    utime(argv[2], timebuf_);
     printf("复制已完成\n");
     delete[] source;
     delete[] object;
+     delete timebuf_;
     return 0;
 }

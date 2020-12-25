@@ -48,10 +48,11 @@ void copyFile(char *sourcePath, char *objectPath)
         FILETIME lpCreationTime, lpLastAccessTime, lpLastWriteTime;
         GetFileTime(hSourceFile, &lpCreationTime, &lpLastAccessTime, &lpLastWriteTime);
         SetFileTime(hObjectFile, &lpCreationTime, &lpLastAccessTime, &lpLastWriteTime);
-        DWORD attr=GetFileAttributes(sourcePath);
-        if(attr!=INVALID_FILE_ATTRIBUTES)
-        SetFileAttributes(objectPath,attr);
-        else printf("设置文件属性无效\n");
+        DWORD attr = GetFileAttributes(sourcePath);
+        if (attr != INVALID_FILE_ATTRIBUTES)
+            SetFileAttributes(objectPath, attr);
+        else
+            printf("设置文件属性无效\n");
         delete[] buffer;
     }
 
@@ -79,7 +80,7 @@ void copyDirectory(char *sourcePath, char *objectPath)
     {
         do
         {
-            if (strcmp(findFileData.cFileName, ".") != 0 && strcmp(findFileData.cFileName, "..") != 0)
+            if (strcmp((const char *)findFileData.cFileName, ".") != 0 && strcmp((const char *)findFileData.cFileName, "..") != 0)
             {
                 strcat(source, "\\");
                 strcat(source, (const char *)(findFileData.cFileName));
@@ -91,18 +92,38 @@ void copyDirectory(char *sourcePath, char *objectPath)
                 }
                 else
                 {
+                    char *tmp_s = new char[1000];
+                    char *tmp_o = new char[1000];
+
                     strcat(object, "\\");
                     strcat(object, (const char *)(findFileData.cFileName));
+                    strcpy(tmp_s, source);
+                    strcpy(tmp_o, object);
                     printf("目录 %s 已创建...\n", object);
-                    CreateDirectory(object, NULL);
+
+                    printf("tmp_s:%s\n", tmp_s);
+                    printf("tmp_0:%s\n", tmp_o);
+                    CreateDirectory((object), NULL);
                     copyDirectory(source, object);
                     strcpy(object, objectPath);
                     strcat(object, "\\");
                     strcpy(source, sourcePath);
+
+                    HANDLE hSourceFile = CreateFile(tmp_s, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+                    HANDLE hObjectFile = CreateFile(tmp_o, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+
+                    FILETIME lpCreationTime, lpLastAccessTime, lpLastWriteTime;
+                    GetFileTime(hSourceFile, &lpCreationTime, &lpLastAccessTime, &lpLastWriteTime);
+                    SetFileTime(hObjectFile, &lpCreationTime, &lpLastAccessTime, &lpLastWriteTime);
+                    CloseHandle(hSourceFile);
+                    CloseHandle(hObjectFile);
+                    delete[] tmp_s;
+                    delete[] tmp_o;
                 }
             }
         } while (FindNextFile(hFilePath, &findFileData));
     }
+
     delete[] source;
     delete[] object;
     CloseHandle(hFilePath);
@@ -112,6 +133,10 @@ int main(int argc, char *argv[])
 
     WIN32_FIND_DATA findFileData;
     WIN32_FIND_DATA findFileData_;
+    char *tmp_S = new char[1000];
+    char *tmp_O = new char[1000];
+    strcpy(tmp_S, argv[1]);
+    strcpy(tmp_O, argv[2]);
     //判断原文件和目标目录是否存在
     if (FindFirstFile(argv[1], &findFileData) == INVALID_HANDLE_VALUE)
     {
@@ -133,11 +158,36 @@ int main(int argc, char *argv[])
     {
 
         strcat(argv[2], "\\");
-        strcat(argv[2], findFileData.cFileName);
+        strcat(argv[2], (const char *)findFileData.cFileName);
         CreateDirectory(argv[2], NULL);
         printf("目录 %s 已创建...\n", argv[2]);
+        char *tmp_s = new char[1000];
+        char *tmp_o = new char[1000];
+        strcpy(tmp_s, argv[1]);
+        strcpy(tmp_o, argv[2]);
         copyDirectory(argv[1], argv[2]);
-    }
 
+        HANDLE hSourceFile = CreateFile(tmp_s, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+        HANDLE hObjectFile = CreateFile(tmp_o, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS,FILE_FLAG_BACKUP_SEMANTICS, NULL);
+
+        FILETIME lpCreationTime, lpLastAccessTime, lpLastWriteTime;
+        GetFileTime(hSourceFile, &lpCreationTime, &lpLastAccessTime, &lpLastWriteTime);
+        SetFileTime(hObjectFile, &lpCreationTime, &lpLastAccessTime, &lpLastWriteTime);
+        CloseHandle(hSourceFile);
+        CloseHandle(hObjectFile);
+        delete[] tmp_o;
+        delete[] tmp_s;
+    }
+    HANDLE hSourceFile = CreateFile(tmp_S, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    HANDLE hObjectFile = CreateFile(tmp_O, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+
+    FILETIME lpCreationTime, lpLastAccessTime, lpLastWriteTime;
+    GetFileTime(hSourceFile, &lpCreationTime, &lpLastAccessTime, &lpLastWriteTime);
+    SetFileTime(hObjectFile, &lpCreationTime, &lpLastAccessTime, &lpLastWriteTime);
+    CloseHandle(hSourceFile);
+    CloseHandle(hObjectFile);
+
+    delete[] tmp_S;
+    delete[] tmp_O;
     return 0;
 }
